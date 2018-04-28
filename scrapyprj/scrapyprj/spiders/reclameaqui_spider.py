@@ -1,10 +1,15 @@
+import re
 import scrapy
-from scrapy_splash import SplashRequest
 import logging
+import datetime
 import itertools
+
+from .orm import DataController
+from scrapy_splash import SplashRequest
 
 logger = logging.Logger(__name__)
 
+pattern  = 'page=(\d+)'
 base_url = 'https://www.reclameaqui.com.br/indices/lista_reclamacoes/' \
            '?id={}&size=10&page=1&status=EVALUATED'
 
@@ -14,17 +19,34 @@ class ReclameAquiSpider(scrapy.Spider):
 
     def start_requests(self):
         for id in itertools.count():
-            id = 616
             url = base_url.format(id)
-            yield SplashRequest(url, self.parse_menu, args={'wait': 5,},)
+            yield SplashRequest(url, self.parse_menu, args={'wait': 5,})
 
     def parse_menu(self, response):
-        for complaint_item in response.css('div.complain-status-title'):
+        complaint_ls = response.css('div.complain-status-title')
+        if not complaint_ls:
+            logging.info("Not found content for {}. Status {}.".format(response.url, response.status))
+            return
+
+        for complaint_item in complaint_ls:
             complaint_item_href = complaint_item.css('a::attr(href)').extract_first()
             if complaint_item_href:
-                next_page = response.urljoin(complaint_item_href)
-                yield SplashRequest(next_page, self.parse_item,  args={'wait': 5,},)
-        # TODO go to the next page
+                next_item = response.urljoin(complaint_item_href)
+                yield SplashRequest(next_item, self.parse_item,  args={'wait': 5,},)
+
+        next_pages = response.css('ul.pagination li a::text')
+
+        # It means it has at least on page to go forward
+        has_pagination = len(next_pages) >= 4
+        if has_pagination:
+            last_page = int(next_pages.extract()[-2])
+            m = re.search(pattern, response.url)
+            if m:
+                next_page = int(m.group(1)) + 1
+                if next_page > last_page:
+                    return
+                next_page_href = response.url.replace(m.group(0), 'page={}'.format(next_page))
+                yield SplashRequest(next_page_href, self.parse_menu, args={'wait': 5,})
 
     def parse_item(self, response):
         def parse_chunks(selector):
@@ -42,14 +64,29 @@ class ReclameAquiSpider(scrapy.Spider):
                     "Couldn't find solved status for {}".format(img_src))
                 return None
 
-        business = response.css('a.business::text')[0].extract()
-        location = response.css('ul.local-date li::text')[0].extract()
-        date = response.css('ul.local-date li::text')[1].extract()
-        title = response.css('h1::text').extract_first()
-        complaint_body = parse_chunks('div.complain-body p::text')
-        final_answer = response.css('div.reply-content p::text')[-1].extract()
+        css = response.css
 
-        rates = response.css('div.score-seal')
-        solved = solved()
-        again = rates[1].css('p::text')[2].extract()
-        rate = rates[2].css('p::text')[2].extract()
+        business        = css('a.business::text')[0].extract()
+        location        = css('ul.local-date li::text')[0].extract()
+        date            = css('ul.local-date li::text')[1].extract()
+        title           = css('h1::text').extract_first()
+        complaint_body  = parse_chunks('div.complain-body p::text')
+        final_answer    = css('div.reply-content p::text')[-1].extract()
+        rates           = css('div.score-seal')
+        again           = rates[1].css('p::text')[2].extract()
+        rate            = rates[2].css('p::text')[2].extract()
+
+        with DataController() as ds:
+            ds.insert({
+                'business':       business,
+                'location':       location,
+                'date':           date,
+                'title':          title,
+                'complaint_body': complaint_body,
+                'final_answer':   final_answer,
+                'solved':         solved(),
+                'again':          again,
+                'rate':           rate,
+                'url':            response.url,
+                'created_at':     datetime.datetime.now()
+            })
