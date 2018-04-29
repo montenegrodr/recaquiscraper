@@ -8,7 +8,7 @@ cssselect==1.0.3
 hyperlink==18.0.0
 idna==2.6
 incremental==17.5.0
-letmecrawl==0.10
+letmecrawl==0.11
 lxml==4.2.1
 parsel==1.4.0
 pyasn1==0.4.2

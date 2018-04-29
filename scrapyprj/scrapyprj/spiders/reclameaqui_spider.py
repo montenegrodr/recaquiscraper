@@ -1,17 +1,31 @@
 import re
+import sys
 import scrapy
 import logging
 import datetime
 import itertools
 
+from letmecrawl import letmecrawl
 from .orm import DataController
 from scrapy_splash import SplashRequest
 
 logger = logging.Logger(__name__)
+logging.getLogger('letmecrawl.models').setLevel(logging.INFO)
+logger.setLevel(logging.INFO)
 
-pattern  = 'page=(\d+)'
-base_url = 'https://www.reclameaqui.com.br/indices/lista_reclamacoes/' \
-           '?id={}&size=10&page=1&status=EVALUATED'
+wait_time = 5
+pattern   = 'page=(\d+)'
+base_url  = 'https://www.reclameaqui.com.br/indices/lista_reclamacoes/?id={}&size=10&page=1&status=EVALUATED'
+
+
+class ProxyController(object):
+    proxy = None
+
+    @staticmethod
+    def get_proxy(new=False):
+        if not ProxyController.proxy or new:
+            proxy = next(letmecrawl())
+        return 'http://{}:{}'.format(proxy.ip, proxy.port)
 
 
 class ReclameAquiSpider(scrapy.Spider):
@@ -20,12 +34,26 @@ class ReclameAquiSpider(scrapy.Spider):
     def start_requests(self):
         for id in itertools.count():
             url = base_url.format(id)
-            yield SplashRequest(url, self.parse_menu, args={'wait': 5,})
+            yield SplashRequest(url, self.parse_menu, errback=self.err_back,
+                                args={
+                                    'wait': wait_time,
+                                    'proxy': ProxyController.get_proxy()
+                                })
+
+    def err_back(self, response):
+        ProxyController.get_proxy(new=True)
 
     def parse_menu(self, response):
+        def last_page():
+            if next_pages.extract()[-2] == '...':
+                return sys.maxsize
+            else:
+                return int(next_pages.extract()[-2])
+
         complaint_ls = response.css('div.complain-status-title')
         if not complaint_ls:
-            logging.info("Not found content for {}. Status {}.".format(response.url, response.status))
+            logging.info("Not found content for {}. Status {}.".format(
+                response.url, response.status))
             return
 
         for complaint_item in complaint_ls:
@@ -39,14 +67,17 @@ class ReclameAquiSpider(scrapy.Spider):
         # It means it has at least on page to go forward
         has_pagination = len(next_pages) >= 4
         if has_pagination:
-            last_page = int(next_pages.extract()[-2])
             m = re.search(pattern, response.url)
             if m:
                 next_page = int(m.group(1)) + 1
-                if next_page > last_page:
+                if next_page > last_page():
                     return
                 next_page_href = response.url.replace(m.group(0), 'page={}'.format(next_page))
-                yield SplashRequest(next_page_href, self.parse_menu, args={'wait': 5,})
+                yield SplashRequest(next_page_href, self.parse_menu,
+                                    args={
+                                        'wait': wait_time,
+                                        'proxy': ProxyController.get_proxy()
+                                    })
 
     def parse_item(self, response):
         def parse_chunks(selector):
