@@ -5,6 +5,16 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
+class Error(Base):
+    __tablename__ = 'errors'
+
+    id          = Column(Integer, primary_key=True)
+    description = Column(String(255))
+    error       = Column((String(4)))
+    timeout     = Column(String(4))
+    type        = Column(String(255))
+    url         = Column(String(255))
+
 
 class Complain(Base):
     __tablename__ = 'complaint'
@@ -62,6 +72,16 @@ class DataController(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.ds.close_session()
+
+    def insert_error(self, error):
+        self.ds.insert(Error(
+            description=error.get('description'),
+            error=error.get('error'),
+            timeout=error.get('timeout'),
+            type=error.get('type'),
+            url=error.get('url'),
+        ))
+        self.ds.commit()
 
     def insert(self, complaint):
         self.ds.insert(Complain(

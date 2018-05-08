@@ -19,12 +19,17 @@ base_url  = 'https://www.reclameaqui.com.br/indices/lista_reclamacoes/?id={}&siz
 
 
 class ProxyController(object):
+    gen = letmecrawl()
     proxy = None
 
     @staticmethod
     def get_proxy(new=False):
-        if not ProxyController.proxy or new:
-            proxy = next(letmecrawl())
+        try:
+            if not ProxyController.proxy or new:
+                proxy = next(ProxyController.gen)
+        except Exception as exp:
+            logger.error("Proxy error. {}".format(exp))
+            return None
         return 'http://{}:{}'.format(proxy.ip, proxy.port)
 
 
@@ -42,6 +47,14 @@ class ReclameAquiSpider(scrapy.Spider):
 
     def err_back(self, response):
         ProxyController.get_proxy(new=True)
+        with DataController() as ds:
+            ds.insert_error({
+                'description': response.value.response.data.get('description'),
+                'error': response.value.response.data.get('error'),
+                'timeout': response.value.response.data.get('info', {}).get('timeout'),
+                'type': response.value.response.data.get('type'),
+                'url': response.value.response.url
+            })
 
     def parse_menu(self, response):
         def last_page():
