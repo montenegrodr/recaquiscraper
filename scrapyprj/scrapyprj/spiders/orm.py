@@ -5,6 +5,17 @@ from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
+class Error(Base):
+    __tablename__ = 'errors'
+
+    id          = Column(Integer, primary_key=True)
+    description = Column(String(255))
+    error       = Column((String(4)))
+    timeout     = Column(String(4))
+    type        = Column(String(255))
+    url         = Column(String(255))
+    created_at  = Column(DateTime)
+
 
 class Complain(Base):
     __tablename__ = 'complaint'
@@ -21,6 +32,7 @@ class Complain(Base):
     rate            = Column(String(3))
     url             = Column(String(255))
     created_at      = Column(DateTime)
+    store_id        = Column(Integer)
 
 
 class Dataset(object):
@@ -63,6 +75,17 @@ class DataController(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.ds.close_session()
 
+    def insert_error(self, error):
+        self.ds.insert(Error(
+            description=error.get('description'),
+            error=error.get('error'),
+            timeout=error.get('timeout'),
+            type=error.get('type'),
+            url=error.get('url'),
+            created_at=error.get('created_at')
+        ))
+        self.ds.commit()
+
     def insert(self, complaint):
         self.ds.insert(Complain(
             business        =complaint.get('business'),
@@ -76,5 +99,6 @@ class DataController(object):
             rate            =complaint.get('rate'),
             url             =complaint.get('url'),
             created_at      =complaint.get('created_at'),
+            store_id        =complaint.get('id')
         ))
         self.ds.commit()
