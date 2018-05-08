@@ -14,6 +14,7 @@ class Error(Base):
     timeout     = Column(String(4))
     type        = Column(String(255))
     url         = Column(String(255))
+    created_at  = Column(DateTime)
 
 
 class Complain(Base):
@@ -80,6 +81,7 @@ class DataController(object):
             timeout=error.get('timeout'),
             type=error.get('type'),
             url=error.get('url'),
+            created_at=error.get('created_at')
         ))
         self.ds.commit()
 

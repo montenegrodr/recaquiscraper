@@ -53,7 +53,8 @@ class ReclameAquiSpider(scrapy.Spider):
                 'error': response.value.response.data.get('error'),
                 'timeout': response.value.response.data.get('info', {}).get('timeout'),
                 'type': response.value.response.data.get('type'),
-                'url': response.value.response.url
+                'url': response.value.response.url,
+                'created_at': datetime.datetime.now()
             })
 
     def parse_menu(self, response):
