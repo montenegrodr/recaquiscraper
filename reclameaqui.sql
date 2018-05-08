@@ -35,6 +35,7 @@ CREATE TABLE `complaint` (
   `rate` varchar(3) DEFAULT NULL,
   `url` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
+  `store_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;

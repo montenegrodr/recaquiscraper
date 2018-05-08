@@ -32,6 +32,7 @@ class Complain(Base):
     rate            = Column(String(3))
     url             = Column(String(255))
     created_at      = Column(DateTime)
+    store_id        = Column(Integer)
 
 
 class Dataset(object):
@@ -98,5 +99,6 @@ class DataController(object):
             rate            =complaint.get('rate'),
             url             =complaint.get('url'),
             created_at      =complaint.get('created_at'),
+            store_id        =complaint.get('id')
         ))
         self.ds.commit()

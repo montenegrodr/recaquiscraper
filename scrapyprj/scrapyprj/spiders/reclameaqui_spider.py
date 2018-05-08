@@ -14,6 +14,7 @@ logging.getLogger('letmecrawl.models').setLevel(logging.INFO)
 logger.setLevel(logging.INFO)
 
 wait_time = 5
+window    = 10000
 pattern   = 'page=(\d+)'
 base_url  = 'https://www.reclameaqui.com.br/indices/lista_reclamacoes/?id={}&size=10&page=1&status=EVALUATED'
 
@@ -37,13 +38,16 @@ class ReclameAquiSpider(scrapy.Spider):
     name = "reclame_aqui"
 
     def start_requests(self):
-        for id in itertools.count():
+        id0 = int(self.begin)
+        idf = id0 + window
+        for id in range(id0, idf):
             url = base_url.format(id)
             yield SplashRequest(url, self.parse_menu, errback=self.err_back,
                                 args={
                                     'wait': wait_time,
                                     'proxy': ProxyController.get_proxy()
-                                })
+                                },
+                                meta={'id': id})
 
     def err_back(self, response):
         ProxyController.get_proxy(new=True)
@@ -74,7 +78,8 @@ class ReclameAquiSpider(scrapy.Spider):
             complaint_item_href = complaint_item.css('a::attr(href)').extract_first()
             if complaint_item_href:
                 next_item = response.urljoin(complaint_item_href)
-                yield SplashRequest(next_item, self.parse_item,  args={'wait': 5,},)
+                yield SplashRequest(next_item, self.parse_item,  args={'wait': 5,},
+                                    meta={'id': response.meta.get('id')})
 
         next_pages = response.css('ul.pagination li a::text')
 
@@ -91,7 +96,8 @@ class ReclameAquiSpider(scrapy.Spider):
                                     args={
                                         'wait': wait_time,
                                         'proxy': ProxyController.get_proxy()
-                                    })
+                                    },
+                                    meta={'id': response.meta.get('id')})
 
     def parse_item(self, response):
         def parse_chunks(selector):
@@ -133,5 +139,6 @@ class ReclameAquiSpider(scrapy.Spider):
                 'again':          again,
                 'rate':           rate,
                 'url':            response.url,
-                'created_at':     datetime.datetime.now()
+                'created_at':     datetime.datetime.now(),
+                'id':             response.meta.get('id'),
             })
