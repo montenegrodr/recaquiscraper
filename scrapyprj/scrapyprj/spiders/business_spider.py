@@ -1,14 +1,11 @@
-import datetime
 import time
-from itertools import count
-
 import scrapy
+import datetime
+
+from itertools import count
 from scrapy_splash import SplashRequest
 from .orm import DataController
-
-BASE_URL = 'https://www.reclameaqui.com.br/indices/lista_reclamacoes/?id={}&size=10&page={}&status=EVALUATED'
-SLEEP_TIME = 1
-MAX_PAGE = 10000
+from .commons import URL, MAX_PAGE, SLEEP_TIME
 
 
 def business_start():
@@ -21,13 +18,11 @@ class BusinessSpider(scrapy.Spider):
 
     def start_requests(self):
         for id in count(start=business_start()):
-            yield SplashRequest(url=BASE_URL.format(id, MAX_PAGE),
+            yield SplashRequest(url=URL.format(id, MAX_PAGE),
                                 callback=self.parse,
                                 errback=self.error,
                                 meta={'id': id},
-                                args={
-                                    'wait': 5,
-                                }
+                                args={'wait': 20}
             )
             # Sleeping because we're not using proxy here
             time.sleep(SLEEP_TIME)

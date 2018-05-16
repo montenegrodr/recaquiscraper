@@ -8,6 +8,10 @@ from sqlalchemy.sql import func
 Base = declarative_base()
 
 
+class NoPageToProcessException(Exception):
+    pass
+
+
 class Business(Base):
     __tablename__ = 'business'
 
@@ -21,12 +25,27 @@ class Business(Base):
 
 
 class Page(Base):
-    __tablename__ = 'business_pages'
+    __tablename__ = 'business_page'
 
     id          = Column(Integer, primary_key=True)
     page        = Column(Integer)
     processed   = Column(Boolean)
     id_business = Column(Integer)
+    locked      = Column(Boolean)
+    error       = Column(String(255))
+
+
+class ComplaintPage(Base):
+    __tablename__ = 'complaint_page'
+
+    id          = Column(Integer, primary_key=True)
+    id_business = Column(Integer)
+    id_page     = Column(Integer)
+    url         = Column(String(255))
+    processed   = Column(Boolean)
+    locked      = Column(Boolean)
+    error       = Column(String(255))
+
 
 class Error(Base):
     __tablename__ = 'errors'
@@ -91,6 +110,12 @@ class Dataset(object):
     def business_max_id(self):
         return self.session.query(func.max(Business.store_id)).scalar()
 
+    def next_page(self):
+        return self.session.query(Page).filter(Page.processed == False, Page.locked == False).first()
+
+    def get_page(self, id):
+        return self.session.query(Page).filter(Page.id == id).one()
+
 
 class DataController(object):
     def __init__(self):
@@ -112,6 +137,14 @@ class DataController(object):
                 nb_pages=obj.get('nb_pages'),
                 created_at=obj.get('created_at'),
                 error=obj.get('error')
+            )
+        elif 'url' in obj:
+            pojo_obj = ComplaintPage(
+                url=obj.get('url'),
+                id_business=obj.get('id_business'),
+                id_page=obj.get('id_page'),
+                processed=False,
+                locked=False
             )
         elif 'id_business' in obj:
             pojo_obj = Page(
@@ -138,7 +171,23 @@ class DataController(object):
     def business_max_id(self):
         return self.ds.business_max_id()
 
-    # def insert(self, complaint):
+    def next_page(self):
+        page = self.ds.next_page()
+        if not page:
+            raise NoPageToProcessException()
+        page.locked = True
+        self.ds.commit()
+        return page
+
+    def unlock(self, page, err):
+        page.locked = False
+        page.error = err
+
+    def get_page(self, id):
+        return self.ds.get_page(id)
+
+
+        # def insert(self, complaint):
     #     self.ds.insert(Complain(
     #         business        =complaint.get('business'),
     #         location        =complaint.get('location'),
