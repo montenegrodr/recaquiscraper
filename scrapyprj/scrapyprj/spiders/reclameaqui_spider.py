@@ -3,7 +3,6 @@ import sys
 import scrapy
 import logging
 import datetime
-import itertools
 
 from letmecrawl import letmecrawl
 from .orm import DataController
