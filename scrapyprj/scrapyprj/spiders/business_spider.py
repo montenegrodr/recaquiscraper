@@ -28,7 +28,7 @@ class BusinessSpider(scrapy.Spider):
             time.sleep(SLEEP_TIME)
 
     def error(self, response):
-        company_id = response.meta.get('id')
+        company_id = response.value.response.meta.get('id')
         with DataController() as ds:
             ds.insert(obj={
                 'store_id': company_id,
@@ -60,6 +60,7 @@ class BusinessSpider(scrapy.Spider):
                     ds.insert(obj={
                         'page': page,
                         'processed': False,
+                        'locked': False,
                         'id_business': company_id
                     },
                         commit=False)

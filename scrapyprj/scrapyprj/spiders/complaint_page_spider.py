@@ -27,8 +27,8 @@ class ProxyController(object):
         return 'http://{}:{}'.format(proxy.ip, proxy.port)
 
 
-class ComplaintSpider(scrapy.Spider):
-    name = 'complaint'
+class ComplaintPageSpider(scrapy.Spider):
+    name = 'complaint_page'
 
     def start_requests(self):
         with DataController() as ds:
@@ -42,12 +42,16 @@ class ComplaintSpider(scrapy.Spider):
                                         args={'wait': 20,
                                               'proxy': ProxyController.get_proxy()})
                 except NoPageToProcessException:
-                    logger.info('No pages foudn to process')
+                    logger.info('No pages found to process')
                     time.sleep(NO_PAGES_SLEEP)
+                    ds.commit()
 
     def error(self, response):
-        logger.info("error")
-        pass
+        page_id = response.value.response.meta.get('page_id')
+        with DataController() as ds:
+            page = ds.get_page(page_id)
+            page.error = response.value.response.text
+            page.locked = False
 
     def parse(self, response):
         page_id = response.meta.get('page_id')
@@ -71,5 +75,6 @@ class ComplaintSpider(scrapy.Spider):
                 page.processed=True
         except Exception as err:
             with DataController() as ds:
+                page = ds.get_page(page_id)
                 ds.unlock(page, err)
 

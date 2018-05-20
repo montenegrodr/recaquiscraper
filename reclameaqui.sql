@@ -16,6 +16,43 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
+-- Table structure for table `business`
+--
+
+DROP TABLE IF EXISTS `business`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `business` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  `store_id` int(11) DEFAULT NULL,
+  `nb_pages` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `processed` tinyint(4) DEFAULT NULL,
+  `error` varchar(1025) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=115 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `business_page`
+--
+
+DROP TABLE IF EXISTS `business_page`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `business_page` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `page` int(11) DEFAULT NULL,
+  `processed` tinyint(4) NOT NULL DEFAULT '0',
+  `id_business` int(11) NOT NULL,
+  `locked` tinyint(4) NOT NULL DEFAULT '0',
+  `error` varchar(1025) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14462 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `complaint`
 --
 
@@ -36,6 +73,45 @@ CREATE TABLE `complaint` (
   `url` varchar(255) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `store_id` int(11) DEFAULT NULL,
+  `complaint_page_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `complaint_page`
+--
+
+DROP TABLE IF EXISTS `complaint_page`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `complaint_page` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `url` varchar(255) NOT NULL,
+  `id_business` int(11) NOT NULL,
+  `id_page` int(11) NOT NULL,
+  `processed` tinyint(4) NOT NULL DEFAULT '0',
+  `locked` tinyint(4) NOT NULL DEFAULT '0',
+  `error` varchar(1025) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=161 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `errors`
+--
+
+DROP TABLE IF EXISTS `errors`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `errors` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `description` varchar(255) DEFAULT NULL,
+  `error` varchar(4) DEFAULT NULL,
+  `timeout` varchar(4) DEFAULT NULL,
+  `type` varchar(255) DEFAULT NULL,
+  `url` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -49,15 +125,4 @@ CREATE TABLE `complaint` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2018-04-29 22:47:23
-DROP TABLE IF EXISTS `errors`;
-CREATE TABLE `errors` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `description` varchar(255) DEFAULT NULL,
-  `error` varchar(4) DEFAULT NULL,
-  `type` varchar(255) DEFAULT NULL,
-  `url` varchar(255) DEFAULT NULL,
-  `timeout` varchar(4) DEFAULT NULL,
-  `created_at` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=latin1;
+-- Dump completed on 2018-05-20 20:25:00
