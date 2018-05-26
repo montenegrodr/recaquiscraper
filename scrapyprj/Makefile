@@ -1,10 +1,10 @@
 .PHONY: business
 business:
-	crawl business
+	scrapy crawl business
 
 .PHONY: complaint_page
 complaint_page:
-	crawl complaint_page
+	scrapy crawl complaint_page
 
 .PHONY: complaint
 complaint:
