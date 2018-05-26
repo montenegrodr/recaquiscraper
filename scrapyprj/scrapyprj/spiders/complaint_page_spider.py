@@ -5,7 +5,7 @@ import logging
 from scrapy_splash import SplashRequest
 from letmecrawl import letmecrawl
 from .orm import DataController, NoPageToProcessException
-from .commons import URL, NO_PAGES_SLEEP
+from .commons import URL, NO_PAGES_SLEEP, ENABLE_PROXY
 
 logger = logging.Logger(__name__)
 logging.getLogger('letmecrawl.models').setLevel(logging.INFO)
@@ -27,6 +27,17 @@ class ProxyController(object):
         return 'http://{}:{}'.format(proxy.ip, proxy.port)
 
 
+def args():
+    kwargs = {
+        'args': {
+            'wait': 20
+        }
+    }
+    if ENABLE_PROXY:
+        kwargs['args']['proxy'] = ProxyController.get_proxy()
+    return kwargs
+
+
 class ComplaintPageSpider(scrapy.Spider):
     name = 'complaint_page'
 
@@ -39,8 +50,7 @@ class ComplaintPageSpider(scrapy.Spider):
                                         callback=self.parse,
                                         errback=self.error,
                                         meta={'page_id': page.id},
-                                        args={'wait': 20,
-                                              'proxy': ProxyController.get_proxy()})
+                                        **args())
                 except NoPageToProcessException:
                     logger.info('No pages found to process')
                     time.sleep(NO_PAGES_SLEEP)

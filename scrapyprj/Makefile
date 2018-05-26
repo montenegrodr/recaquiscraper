@@ -1,4 +1,11 @@
-.PHONY: crawl
-crawl:
-	scrapy crawl reclame_aqui -s JOBDIR=crawls/somespider-${SLICE_BEGIN} -a begin=${SLICE_BEGIN}
+.PHONY: business
+business:
+	crawl business
 
+.PHONY: complaint_page
+complaint_page:
+	crawl complaint_page
+
+.PHONY: complaint
+complaint:
+	scrapy crawl complaint
