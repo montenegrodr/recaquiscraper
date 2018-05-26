@@ -1,5 +1,6 @@
-SPLASH_PORT ?= 8050
-SLICE_BEGIN ?= 0
+SPLASH_PORT  ?= 8050
+SLICE_BEGIN  ?= 0
+ENABLE_PROXY ?= 1
 
 export
 
@@ -7,9 +8,17 @@ export
 run-splash:
 	docker run -p ${SPLASH_PORT}:${SPLASH_PORT} scrapinghub/splash
 
-.PHONY: crawl
-crawl:
-	$(MAKE) -C scrapyprj crawl
+.PHONY: business
+business:
+	$(MAKE) -C scrapyprj business
+
+.PHONY: complaint_page
+complaint_page:
+	$(MAKE) -C scrapyprj complaint_page
+
+.PHONY: complaint
+complaint:
+	$(MAKE) -C scrapyprj complaint
 
 .PHONY: build
 build:
