@@ -6,7 +6,7 @@ import datetime
 from letmecrawl import letmecrawl
 from scrapy_splash import SplashRequest
 from .orm import DataController, NoPageToProcessException
-from .commons import NO_PAGES_SLEEP, ENABLE_PROXY
+from .commons import NO_PAGES_SLEEP, ENABLE_PROXY, TIMEOUT
 
 logger = logging.Logger(__name__)
 logging.getLogger('letmecrawl.models').setLevel(logging.INFO)
@@ -31,7 +31,7 @@ class ProxyController(object):
 def args():
     kwargs = {
         'args': {
-            'wait': 20
+            'timeout': TIMEOUT
         }
     }
     if ENABLE_PROXY:

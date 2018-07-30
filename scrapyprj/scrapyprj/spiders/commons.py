@@ -10,3 +10,4 @@ SLEEP_TIME     = 1
 MAX_PAGE       = 10000
 NO_PAGES_SLEEP = 60
 ENABLE_PROXY   = os.getenv('ENABLE_PROXY') == "1"
+TIMEOUT        = os.getenv('TIMEOUT', 60)
